@@ -1,17 +1,17 @@
 {
   "name": "workhub-backend",
-  "version": "1.0.0",
-  "description": "WorkHub — Alertas via Telegram",
+  "version": "2.0.0",
+  "description": "WorkHub — Backend com PostgreSQL e Telegram",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.18.0",
     "node-cron": "^3.0.0",
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^0.66.0",
+    "pg": "^8.11.0"
   }
 }
