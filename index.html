@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkHub</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --em:#085041;--em-mid:#1D9E75;--em-light:#E1F5EE;--em-soft:#9FE1CB;--em-text:#0F6E56;
+  --am-mid:#BA7517;--am-light:#FAEEDA;--am-text:#854F0B;
+  --cr-mid:#D85A30;--cr-light:#FAECE7;--cr-text:#712B13;
+  --pu-mid:#7F77DD;--pu-light:#EEEDFE;--pu-text:#3C3489;
+  --bl-mid:#378ADD;--bl-light:#E6F1FB;--bl-text:#185FA5;
+  --bg:#F4F6F4;--surface:#fff;--surface-alt:#F9FAF9;
+  --border:#E2E8E5;--border-strong:#C8D4CF;
+  --text:#1a1a1a;--text-2:#555;--text-3:#888;--radius:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;}
+.sidebar{width:200px;background:var(--em);min-height:100vh;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;}
+.logo{padding:20px 16px 18px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #0F6E56;}
+.logo i{font-size:20px;color:var(--em-soft);}
+.logo span{font-size:16px;font-weight:600;color:var(--em-light);}
+.nav-section{font-size:10px;color:var(--em-soft);padding:14px 16px 4px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:#9FE1CB;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .15s;}
+.nav-item:hover{background:#0F6E56;color:var(--em-light);}
+.nav-item.active{background:var(--em-mid);color:#fff;font-weight:500;}
+.nav-item i{font-size:16px;}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid #0F6E56;}
+.s-avatar{width:32px;height:32px;border-radius:50%;background:var(--em-mid);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.user-row{display:flex;align-items:center;gap:10px;}
+.user-name{font-size:13px;color:var(--em-light);}
+.user-role{font-size:11px;color:var(--em-soft);opacity:.8;}
+.page{display:none;flex:1;flex-direction:column;min-width:0;overflow:hidden;height:100vh;}
+.page.active{display:flex;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
+.topbar h1{font-size:17px;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--em-mid);color:#fff;}
+.btn-primary:hover{background:var(--em);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-2);}
+.btn-outline:hover{border-color:var(--em-mid);color:var(--em-mid);}
+.btn-danger{background:var(--cr-light);color:var(--cr-text);border:none;}
+.btn-danger:hover{background:#f0997b;}
+.btn-icon{width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:14px;padding:24px;width:480px;max-width:95vw;border:1px solid var(--border);transform:translateY(10px);transition:transform .2s;}
+.overlay.open .modal{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:15px;font-weight:600;}
+.modal-close{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text-3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--bg);}
+.form-grid{display:grid;gap:14px;}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;font-weight:500;color:var(--text-2);}
+.field input,.field select,.field textarea{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);outline:none;font-family:inherit;transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--em-mid);}
+.field textarea{resize:vertical;min-height:64px;}
+.modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.modal-footer-right{display:flex;gap:8px;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--em);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:all .25s;pointer-events:none;z-index:300;}
+.toast.show{opacity:1;transform:translateY(0);}
+/* loading */
+.loading-bar{position:fixed;top:0;left:0;height:3px;background:var(--em-mid);width:0%;transition:width .3s;z-index:999;}
+.loading-bar.active{width:60%;}
+.loading-bar.done{width:100%;opacity:0;transition:width .3s,opacity .3s .3s;}
+/* kanban */
+.sprint-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.sprint-track{flex:1;max-width:220px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.sprint-fill{height:100%;background:var(--em-mid);border-radius:3px;transition:width .4s;}
+.filterbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+.search-wrap{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;}
+.search-wrap i{font-size:14px;color:var(--text-3);}
+.search-wrap input{border:none;background:transparent;font-size:13px;color:var(--text);outline:none;width:160px;}
+.filter-group{display:flex;gap:6px;align-items:center;}
+.filter-label{font-size:12px;color:var(--text-3);}
+.filter-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;transition:all .15s;}
+.filter-btn:hover{border-color:var(--em-mid);color:var(--em-mid);}
+.filter-btn.active{background:var(--em-light);border-color:var(--em-mid);color:var(--em-text);font-weight:500;}
+.board-wrap{flex:1;overflow-x:auto;overflow-y:hidden;padding:20px 24px 32px;}
+.board{display:flex;gap:14px;min-width:max-content;align-items:flex-start;}
+.k-col{width:240px;background:var(--surface-alt);border-radius:12px;border:1px solid var(--border);display:flex;flex-direction:column;}
+.col-header{padding:12px 12px 10px;border-bottom:1px solid var(--border);}
+.col-title-row{display:flex;align-items:center;justify-content:space-between;}
+.col-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;}
+.col-bar{width:3px;height:14px;border-radius:2px;}
+.col-count{font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1px 8px;color:var(--text-3);}
+.col-add-btn{width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.col-add-btn:hover{background:var(--em-light);color:var(--em-text);}
+.k-cards{padding:8px;display:flex;flex-direction:column;gap:8px;min-height:48px;}
+.k-cards.drag-over{background:var(--em-light);border-radius:8px;}
+.task-card{background:var(--surface);border-radius:9px;border:1px solid var(--border);padding:11px 12px;cursor:grab;user-select:none;transition:border-color .15s,opacity .15s;}
+.task-card:hover{border-color:var(--border-strong);}
+.task-card.dragging{opacity:.4;}
+.task-card.k-hidden{display:none;}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;}
+.ktag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.ktag-dev{background:var(--em-light);color:var(--em);}
+.ktag-design{background:var(--pu-light);color:var(--pu-text);}
+.ktag-bug{background:var(--cr-light);color:var(--cr-text);}
+.ktag-doc{background:var(--am-light);color:var(--am-text);}
+.ktag-teste{background:#EAF3DE;color:#27500A;}
+.card-title{font-size:13px;color:var(--text);line-height:1.45;margin-bottom:10px;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;}
+.card-meta{display:flex;align-items:center;gap:8px;}
+.prio{font-size:11px;display:flex;align-items:center;gap:3px;font-weight:500;}
+.prio-alta{color:var(--cr-text);}.prio-urgente{color:#a00;}.prio-media{color:var(--am-text);}.prio-baixa{color:var(--text-3);}
+.due-date{font-size:11px;color:var(--text-3);}
+.due-date.late{color:var(--cr-text);}
+.card-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
+.task-card:hover .card-actions{opacity:1;}
+.card-btn{width:22px;height:22px;border-radius:5px;border:none;background:transparent;color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.card-btn.del:hover{background:var(--cr-light);color:var(--cr-text);}
+.add-card-form{padding:0 8px 8px;display:none;}
+.add-card-form.visible{display:block;}
+.add-card-input{width:100%;border:1px solid var(--em-mid);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);background:var(--surface);outline:none;resize:none;font-family:inherit;}
+.add-card-actions{display:flex;gap:6px;margin-top:6px;}
+.btn-confirm{font-size:12px;padding:5px 14px;border-radius:var(--radius);border:none;background:var(--em-mid);color:#fff;cursor:pointer;font-weight:500;}
+.btn-cancel-inline{font-size:12px;padding:5px 10px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;}
+.k-empty{padding:20px 12px;text-align:center;color:var(--text-3);font-size:12px;}
+.k-empty i{font-size:24px;display:block;margin-bottom:6px;opacity:.4;}
+/* agenda */
+.cal-body{flex:1;display:flex;overflow:hidden;}
+.cal-left{width:260px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.mini-cal{padding:16px;border-bottom:1px solid var(--border);}
+.mini-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.mini-nav-title{font-size:14px;font-weight:600;}
+.mini-nav-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.mini-nav-btn:hover{background:var(--em-light);color:var(--em-text);}
+.mini-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.mini-wd{font-size:10px;color:var(--text-3);text-align:center;padding:4px 0;font-weight:600;}
+.mini-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.mini-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-2);cursor:pointer;border-radius:50%;transition:all .1s;position:relative;}
+.mini-day:hover{background:var(--em-light);color:var(--em-text);}
+.mini-day.other{color:var(--text-3);opacity:.4;}
+.mini-day.today{background:var(--em-mid);color:#fff;font-weight:600;}
+.mini-day.has-ev::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--em-mid);position:absolute;bottom:1px;left:50%;transform:translateX(-50%);}
+.mini-day.today.has-ev::after{background:#fff;}
+.upcoming-sec{padding:16px;flex:1;}
+.sec-title{font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
+.up-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.up-item:last-child{border-bottom:none;}
+.up-dot{width:4px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:36px;}
+.up-date{flex-shrink:0;text-align:center;width:36px;}
+.up-day-num{font-size:18px;font-weight:600;line-height:1;}
+.up-day-name{font-size:10px;color:var(--text-3);}
+.up-title{font-size:13px;font-weight:500;color:var(--text);}
+.up-time{font-size:11px;color:var(--text-3);margin-top:3px;}
+.up-badge{display:inline-block;font-size:10px;padding:1px 8px;border-radius:20px;margin-top:4px;font-weight:500;}
+.cal-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.cal-nav-bar{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.cal-month-title{font-size:16px;font-weight:600;min-width:160px;}
+.cal-today-btn{font-size:12px;padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;}
+.cal-today-btn:hover{border-color:var(--em-mid);color:var(--em-mid);}
+.cal-nav-btn2{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.cal-nav-btn2:hover{background:var(--em-light);color:var(--em-text);}
+.view-tabs{display:flex;background:var(--bg);border-radius:var(--radius);padding:3px;}
+.view-tab{padding:5px 14px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--text-2);border:none;background:transparent;}
+.view-tab.active{background:var(--surface);color:var(--em-text);}
+.month-grid{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.weekday-row{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.wday{font-size:11px;font-weight:600;color:var(--text-3);text-align:center;padding:8px 0;text-transform:uppercase;letter-spacing:.04em;}
+.days-grid{flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;overflow:hidden;}
+.day-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px;display:flex;flex-direction:column;gap:2px;background:var(--surface);cursor:pointer;}
+.day-cell:nth-child(7n){border-right:none;}
+.day-cell:hover{background:#f8faf8;}
+.day-cell.other-month{background:var(--surface-alt);}
+.day-cell.other-month .day-num{color:var(--text-3);opacity:.45;}
+.day-cell.c-today .day-num{background:var(--em-mid);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.day-num{font-size:13px;color:var(--text-2);font-weight:500;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.ev-pill{font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;line-height:1.4;}
+.ev-pill:hover{filter:brightness(.92);}
+.cat-reuniao{background:var(--em-light);color:var(--em);}
+.cat-prazo{background:var(--cr-light);color:var(--cr-text);}
+.cat-entrega{background:var(--am-light);color:var(--am-text);}
+.cat-pessoal{background:var(--pu-light);color:var(--pu-text);}
+.cat-lembrete{background:var(--bl-light);color:var(--bl-text);}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);}
+.legend-dot{width:10px;height:10px;border-radius:3px;}
+.detail-overlay{position:fixed;inset:0;z-index:90;pointer-events:none;}
+.detail-overlay.open{pointer-events:all;}
+.detail-panel{position:fixed;right:0;top:0;bottom:0;width:300px;background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;z-index:95;}
+.detail-overlay.open .detail-panel{transform:translateX(0);}
+.detail-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.detail-cat-bar{width:4px;border-radius:2px;flex-shrink:0;align-self:stretch;}
+.detail-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.3;}
+.detail-body{padding:16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.detail-row{display:flex;align-items:flex-start;gap:10px;}
+.detail-icon{font-size:16px;color:var(--text-3);flex-shrink:0;margin-top:1px;}
+.detail-label{font-size:11px;color:var(--text-3);margin-bottom:2px;}
+.detail-val{font-size:13px;color:var(--text);}
+.detail-footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:8px;}
+/* base de dados */
+.kb-body{flex:1;display:flex;overflow:hidden;}
+.cat-panel{width:200px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.cat-search{padding:12px;border-bottom:1px solid var(--border);}
+.cat-list-wrap{padding:10px 8px;flex:1;}
+.cat-section-label{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:10px 8px 4px;font-weight:600;}
+.cat-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text-2);transition:background .12s;}
+.cat-item:hover{background:var(--bg);}
+.cat-item.active{background:var(--em-light);color:var(--em-text);font-weight:500;}
+.cat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.cat-count-badge{margin-left:auto;font-size:11px;color:var(--text-3);background:var(--bg);border-radius:20px;padding:0 6px;border:1px solid var(--border);}
+.cat-item.active .cat-count-badge{background:var(--em-light);border-color:var(--em-mid);color:var(--em-text);}
+.add-cat-btn{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text-3);border:none;background:none;width:100%;}
+.add-cat-btn:hover{background:var(--bg);color:var(--em-text);}
+.notes-panel{width:280px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:var(--surface-alt);overflow:hidden;}
+.notes-header{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0;}
+.notes-title{font-size:13px;font-weight:600;}
+.notes-count{font-size:11px;color:var(--text-3);}
+.sort-select{font-size:12px;border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;background:var(--surface);color:var(--text-2);outline:none;cursor:pointer;}
+.notes-list{flex:1;overflow-y:auto;}
+.note-item{padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.note-item:hover{background:#f0f5f2;}
+.note-item.active{background:var(--em-light);border-left:3px solid var(--em-mid);}
+.note-item.active .note-item-title{color:var(--em-text);}
+.note-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px;}
+.note-item-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.3;flex:1;}
+.pin-icon-sm{font-size:13px;color:var(--em-mid);flex-shrink:0;}
+.note-item-preview{font-size:12px;color:var(--text-3);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:7px;}
+.note-item-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.note-date{font-size:11px;color:var(--text-3);}
+.ntag{font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500;}
+.empty-notes{padding:32px 16px;text-align:center;color:var(--text-3);}
+.empty-notes i{font-size:32px;display:block;margin-bottom:8px;opacity:.35;}
+.editor-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--surface);}
+.editor-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-3);gap:12px;}
+.editor-empty-state i{font-size:48px;opacity:.2;}
+.editor-toolbar{padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex-shrink:0;}
+.tb-btn{width:30px;height:30px;border-radius:6px;border:none;background:transparent;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .12s;}
+.tb-btn:hover{background:var(--bg);color:var(--text);}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
+.editor-meta{padding:16px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.note-title-input{width:100%;font-size:22px;font-weight:600;color:var(--text);border:none;outline:none;background:transparent;font-family:inherit;line-height:1.3;}
+.note-title-input::placeholder{color:var(--text-3);font-weight:400;}
+.meta-row{display:flex;align-items:center;gap:14px;margin-top:10px;flex-wrap:wrap;}
+.meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-3);}
+.meta-select{font-size:12px;border:1px solid var(--border);border-radius:var(--radius);padding:3px 8px;background:var(--surface);color:var(--text-2);outline:none;cursor:pointer;}
+.tag-input-wrap{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.tag-chip{display:flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px 2px 9px;border-radius:20px;font-weight:500;background:var(--em-light);color:var(--em-text);}
+.tag-chip button{border:none;background:transparent;cursor:pointer;padding:0;display:flex;align-items:center;font-size:11px;opacity:.7;}
+.tag-text-input{border:none;outline:none;background:transparent;font-size:12px;color:var(--text);width:80px;}
+.tag-text-input::placeholder{color:var(--text-3);}
+.pin-btn{display:flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-2);cursor:pointer;}
+.pin-btn.pinned{background:var(--em-light);border-color:var(--em-mid);color:var(--em-text);}
+.editor-content{flex:1;overflow-y:auto;padding:20px 24px 40px;}
+.editor-area{width:100%;min-height:100%;outline:none;font-size:14px;line-height:1.75;color:var(--text);border:none;background:transparent;font-family:inherit;}
+.editor-area:empty::before{content:attr(data-placeholder);color:var(--text-3);pointer-events:none;}
+.editor-area h1{font-size:20px;font-weight:600;margin:16px 0 8px;}
+.editor-area h2{font-size:16px;font-weight:600;margin:14px 0 6px;}
+.editor-area blockquote{border-left:3px solid var(--em-mid);padding:6px 14px;color:var(--text-2);background:var(--em-light);border-radius:0 6px 6px 0;margin:10px 0;font-style:italic;}
+.editor-area code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:12px;color:var(--cr-text);}
+.editor-area pre{background:#1a2820;color:var(--em-soft);border-radius:8px;padding:14px 16px;font-family:monospace;font-size:12px;overflow-x:auto;margin:12px 0;}
+.editor-area ul,.editor-area ol{padding-left:22px;margin:8px 0;}
+.editor-area table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
+.editor-area th{background:var(--em-light);color:var(--em-text);padding:6px 10px;border:1px solid var(--border);font-weight:600;text-align:left;}
+.editor-area td{padding:6px 10px;border:1px solid var(--border);}
+.editor-bottombar{padding:8px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.word-count,.save-status{font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:4px;}
+.save-status.saved{color:var(--em-text);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="loading-bar"></div>
+
+<nav class="sidebar">
+  <div class="logo"><i class="ti ti-leaf"></i><span>WorkHub</span></div>
+  <span class="nav-section">Principal</span>
+  <button class="nav-item active" onclick="goTo('tarefas',this)"><i class="ti ti-checkbox"></i> Tarefas</button>
+  <button class="nav-item" onclick="goTo('agenda',this)"><i class="ti ti-calendar"></i> Agenda</button>
+  <button class="nav-item" onclick="goTo('base',this)"><i class="ti ti-notes"></i> Base de dados</button>
+  <span class="nav-section">Conta</span>
+  <button class="nav-item" onclick="goTo('config',this)"><i class="ti ti-settings"></i> Configurações</button>
+  <div class="sidebar-footer">
+    <div class="user-row"><div class="s-avatar">WH</div><div><div class="user-name">WorkHub</div><div class="user-role">Online</div></div></div>
+  </div>
+</nav>
+
+<!-- TAREFAS -->
+<div class="page active" id="page-tarefas">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:14px"><h1>Kanban</h1></div>
+    <div class="topbar-right">
+      <button class="btn btn-primary" onclick="kOpenModal()"><i class="ti ti-plus"></i> Nova tarefa</button>
+    </div>
+  </header>
+  <div class="sprint-bar">
+    <span style="font-size:12px;color:var(--text-2);font-weight:500">Sprint atual</span>
+    <div class="sprint-track"><div class="sprint-fill" id="k-sprint-fill" style="width:0%"></div></div>
+    <span style="font-size:12px;color:var(--em-text);font-weight:600" id="k-sprint-pct">0%</span>
+    <span style="font-size:11px;color:var(--text-3);margin-left:auto">9 jul – 23 jul 2026</span>
+  </div>
+  <div class="filterbar">
+    <div class="search-wrap"><i class="ti ti-search"></i><input type="text" id="k-search" placeholder="Buscar tarefas..." oninput="kFilter()"></div>
+    <div class="filter-group">
+      <span class="filter-label">Prioridade:</span>
+      <button class="filter-btn active" data-prio="all" onclick="kSetFilter('prio',this)">Todas</button>
+      <button class="filter-btn" data-prio="urgente" onclick="kSetFilter('prio',this)">Urgente</button>
+      <button class="filter-btn" data-prio="alta" onclick="kSetFilter('prio',this)">Alta</button>
+      <button class="filter-btn" data-prio="media" onclick="kSetFilter('prio',this)">Média</button>
+      <button class="filter-btn" data-prio="baixa" onclick="kSetFilter('prio',this)">Baixa</button>
+    </div>
+  </div>
+  <div class="board-wrap"><div class="board" id="k-board"></div></div>
+</div>
+
+<div class="overlay" id="k-overlay" onclick="if(event.target===this)kCloseModal()">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="k-modal-title">Nova tarefa</span><button class="modal-close" onclick="kCloseModal()"><i class="ti ti-x"></i></button></div>
+    <div class="form-grid">
+      <div class="field"><label>Título *</label><input type="text" id="kf-title" placeholder="O que precisa ser feito?"></div>
+      <div class="field"><label>Descrição</label><textarea id="kf-desc"></textarea></div>
+      <div class="form-row2">
+        <div class="field"><label>Coluna</label><select id="kf-col"><option value="todo">A fazer</option><option value="doing">Em andamento</option><option value="review">Revisão</option><option value="done">Concluído</option></select></div>
+        <div class="field"><label>Prioridade</label><select id="kf-prio"><option value="media">Média</option><option value="baixa">Baixa</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
+      </div>
+      <div class="form-row2">
+        <div class="field"><label>Tag</label><select id="kf-tag"><option value="dev">Dev</option><option value="design">Design</option><option value="bug">Bug</option><option value="doc">Doc</option><option value="teste">Teste</option></select></div>
+        <div class="field"><label>Prazo</label><input type="date" id="kf-due"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><div><button class="btn btn-danger" id="k-btn-del" style="display:none" onclick="kDeleteTask()"><i class="ti ti-trash"></i> Excluir</button></div><div class="modal-footer-right"><button class="btn btn-outline" onclick="kCloseModal()">Cancelar</button><button class="btn btn-primary" onclick="kSaveTask()"><i class="ti ti-check"></i> Salvar</button></div></div>
+  </div>
+</div>
+
+<!-- AGENDA -->
+<div class="page" id="page-agenda">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:14px">
+      <h1>Agenda</h1>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1D9E75"></div>Reunião</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D85A30"></div>Prazo</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#BA7517"></div>Entrega</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>Pessoal</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#378ADD"></div>Lembrete</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="calSetView('month',this)">Mês</button>
+        <button class="view-tab" onclick="calSetView('week',this)">Semana</button>
+      </div>
+      <button class="btn btn-primary" onclick="calOpenModal()"><i class="ti ti-plus"></i> Novo evento</button>
+    </div>
+  </header>
+  <div class="cal-body">
+    <div class="cal-left">
+      <div class="mini-cal">
+        <div class="mini-nav">
+          <button class="mini-nav-btn" onclick="miniNav(-1)"><i class="ti ti-chevron-left"></i></button>
+          <span class="mini-nav-title" id="mini-title"></span>
+          <button class="mini-nav-btn" onclick="miniNav(1)"><i class="ti ti-chevron-right"></i></button>
+        </div>
+        <div class="mini-weekdays"><div class="mini-wd">D</div><div class="mini-wd">S</div><div class="mini-wd">T</div><div class="mini-wd">Q</div><div class="mini-wd">Q</div><div class="mini-wd">S</div><div class="mini-wd">S</div></div>
+        <div class="mini-days" id="mini-days"></div>
+      </div>
+      <div class="upcoming-sec"><div class="sec-title">Próximos eventos</div><div id="cal-upcoming"></div></div>
+    </div>
+    <div class="cal-main">
+      <div class="cal-nav-bar">
+        <button class="cal-nav-btn2" onclick="calNav(-1)"><i class="ti ti-chevron-left"></i></button>
+        <button class="cal-nav-btn2" onclick="calNav(1)"><i class="ti ti-chevron-right"></i></button>
+        <span class="cal-month-title" id="cal-main-title"></span>
+        <button class="cal-today-btn" onclick="calGoToday()">Hoje</button>
+      </div>
+      <div id="cal-view" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="cal-overlay" onclick="if(event.target===this)calCloseModal()">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="cal-modal-title">Novo evento</span><button class="modal-close" onclick="calCloseModal()"><i class="ti ti-x"></i></button></div>
+    <div class="form-grid">
+      <div class="field"><label>Título *</label><input type="text" id="ef-title"></div>
+      <div class="form-row2">
+        <div class="field"><label>Data *</label><input type="date" id="ef-date"></div>
+        <div class="field"><label>Categoria</label><select id="ef-cat"><option value="reuniao">Reunião</option><option value="prazo">Prazo</option><option value="entrega">Entrega</option><option value="pessoal">Pessoal</option><option value="lembrete">Lembrete</option></select></div>
+      </div>
+      <div class="form-row2">
+        <div class="field"><label>Hora início</label><input type="time" id="ef-start" value="09:00"></div>
+        <div class="field"><label>Hora fim</label><input type="time" id="ef-end" value="10:00"></div>
+      </div>
+      <div class="field"><label>Local / link</label><input type="text" id="ef-local"></div>
+      <div class="field"><label>Descrição</label><textarea id="ef-desc"></textarea></div>
+      <div class="form-row2">
+        <div class="field"><label>Lembrete</label><select id="ef-remind"><option value="5">5 min antes</option><option value="15" selected>15 min antes</option><option value="30">30 min antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></div>
+        <div class="field"><label>Repetir</label><select id="ef-repeat"><option value="">Não repetir</option><option value="diario">Todo dia</option><option value="semanal">Toda semana</option><option value="mensal">Todo mês</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer"><div><button class="btn btn-danger" id="e-btn-del" style="display:none" onclick="calDeleteEv()"><i class="ti ti-trash"></i> Excluir</button></div><div class="modal-footer-right"><button class="btn btn-outline" onclick="calCloseModal()">Cancelar</button><button class="btn btn-primary" onclick="calSaveEv()"><i class="ti ti-check"></i> Salvar</button></div></div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="det-overlay" onclick="if(event.target===this)detClose()">
+  <div class="detail-panel">
+    <div class="detail-header"><div class="detail-cat-bar" id="det-bar"></div><div style="flex:1"><div class="detail-title" id="det-title"></div></div><button class="modal-close" onclick="detClose()"><i class="ti ti-x"></i></button></div>
+    <div class="detail-body">
+      <div class="detail-row"><i class="ti ti-calendar detail-icon"></i><div><div class="detail-label">Data</div><div class="detail-val" id="det-date"></div></div></div>
+      <div class="detail-row" id="det-time-row"><i class="ti ti-clock detail-icon"></i><div><div class="detail-label">Horário</div><div class="detail-val" id="det-time"></div></div></div>
+      <div class="detail-row" id="det-local-row"><i class="ti ti-map-pin detail-icon"></i><div><div class="detail-label">Local</div><div class="detail-val" id="det-local"></div></div></div>
+      <div class="detail-row" id="det-desc-row"><i class="ti ti-notes detail-icon"></i><div><div class="detail-label">Descrição</div><div class="detail-val" id="det-desc"></div></div></div>
+    </div>
+    <div class="detail-footer"><button class="btn btn-outline" style="flex:1" onclick="detEdit()"><i class="ti ti-edit"></i> Editar</button><button class="btn btn-danger" onclick="detDelete()"><i class="ti ti-trash"></i></button></div>
+  </div>
+</div>
+
+<!-- BASE DE DADOS -->
+<div class="page" id="page-base">
+  <header class="topbar">
+    <h1>Base de Dados</h1>
+    <div class="topbar-right"><button class="btn btn-primary" onclick="nbNewNote()"><i class="ti ti-plus"></i> Nova nota</button></div>
+  </header>
+  <div class="kb-body">
+    <div class="cat-panel">
+      <div class="cat-search"><div class="search-wrap"><i class="ti ti-search"></i><input type="text" id="nb-search" placeholder="Buscar..." oninput="nbRenderList()"></div></div>
+      <div class="cat-list-wrap">
+        <div class="cat-section-label">Filtros</div>
+        <div class="cat-item active" data-cat="all" onclick="nbSelCat('all',this)"><i class="ti ti-layout-list" style="font-size:15px;color:var(--text-3)"></i> Todas <span class="cat-count-badge" id="nb-count-all">0</span></div>
+        <div class="cat-item" data-cat="pinned" onclick="nbSelCat('pinned',this)"><i class="ti ti-pin" style="font-size:15px;color:var(--em-mid)"></i> Fixadas <span class="cat-count-badge" id="nb-count-pinned">0</span></div>
+        <div class="cat-section-label">Categorias</div>
+        <div id="nb-cat-list"></div>
+        <button class="add-cat-btn" onclick="nbOpenCatModal()"><i class="ti ti-plus" style="font-size:14px"></i> Nova categoria</button>
+      </div>
+    </div>
+    <div class="notes-panel">
+      <div class="notes-header"><div><div class="notes-title" id="nb-panel-title">Todas as notas</div><div class="notes-count" id="nb-panel-count">0 notas</div></div><select class="sort-select" id="nb-sort" onchange="nbRenderList()"><option value="updated">Recentes</option><option value="created">Criação</option><option value="title">A–Z</option></select></div>
+      <div class="notes-list" id="nb-list"></div>
+    </div>
+    <div class="editor-panel">
+      <div class="editor-empty-state" id="nb-empty"><i class="ti ti-notes"></i><p>Selecione ou crie uma nota</p><button class="btn btn-primary" onclick="nbNewNote()"><i class="ti ti-plus"></i> Nova nota</button></div>
+      <div id="nb-editor-main" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+        <div class="editor-toolbar">
+          <button class="tb-btn" onclick="nbFmt('bold')"><i class="ti ti-bold"></i></button>
+          <button class="tb-btn" onclick="nbFmt('italic')"><i class="ti ti-italic"></i></button>
+          <button class="tb-btn" onclick="nbFmt('underline')"><i class="ti ti-underline"></i></button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" onclick="nbFmt('h1')"><span style="font-size:12px;font-weight:700">H1</span></button>
+          <button class="tb-btn" onclick="nbFmt('h2')"><span style="font-size:12px;font-weight:700">H2</span></button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" onclick="nbFmt('ul')"><i class="ti ti-list"></i></button>
+          <button class="tb-btn" onclick="nbFmt('ol')"><i class="ti ti-list-numbers"></i></button>
+          <button class="tb-btn" onclick="nbFmt('bq')"><i class="ti ti-quote"></i></button>
+          <button class="tb-btn" onclick="nbFmt('code')"><i class="ti ti-code"></i></button>
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn-icon" onclick="nbDelete()" style="color:var(--cr-text)"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>
+        <div class="editor-meta">
+          <input class="note-title-input" id="nb-title" type="text" placeholder="Título da nota..." oninput="nbAutoSave()">
+          <div class="meta-row">
+            <div class="meta-item"><i class="ti ti-folder"></i><select class="meta-select" id="nb-note-cat" onchange="nbAutoSave()"><option value="">Sem categoria</option></select></div>
+            <div class="meta-item"><i class="ti ti-tag"></i><div class="tag-input-wrap" id="nb-tag-chips"></div><input class="tag-text-input" id="nb-tag-input" placeholder="+ tag" onkeydown="nbTagKey(event)"></div>
+            <button class="pin-btn" id="nb-pin-btn" onclick="nbTogglePin()"><i class="ti ti-pin"></i> <span id="nb-pin-label">Fixar</span></button>
+          </div>
+        </div>
+        <div class="editor-content"><div class="editor-area" id="nb-area" contenteditable="true" data-placeholder="Comece a escrever..." oninput="nbAutoSave()"></div></div>
+        <div class="editor-bottombar"><span class="word-count" id="nb-words">0 palavras</span><span class="save-status" id="nb-save"><i class="ti ti-clock"></i> Não salvo</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="nb-cat-overlay" onclick="if(event.target===this)nbCloseCatModal()">
+  <div class="modal" style="width:360px">
+    <div class="modal-header"><span class="modal-title">Nova categoria</span><button class="modal-close" onclick="nbCloseCatModal()"><i class="ti ti-x"></i></button></div>
+    <div class="field" style="margin-bottom:14px"><label>Nome *</label><input type="text" id="nb-cat-name"></div>
+    <div class="field" style="margin-bottom:14px"><label>Ícone</label><select id="nb-cat-icon"><option value="ti-folder">Pasta</option><option value="ti-code">Código</option><option value="ti-users">Pessoas</option><option value="ti-bulb">Ideias</option><option value="ti-book">Livro</option><option value="ti-briefcase">Trabalho</option></select></div>
+    <div class="field"><label>Cor</label><div id="nb-color-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"></div></div>
+    <div class="modal-footer"><div></div><div class="modal-footer-right"><button class="btn btn-outline" onclick="nbCloseCatModal()">Cancelar</button><button class="btn btn-primary" onclick="nbSaveCat()">Salvar</button></div></div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="page" id="page-config">
+  <header class="topbar"><h1>Configurações</h1></header>
+  <div style="padding:40px;max-width:540px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">URL da API</div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:10px">Cole aqui a URL do seu servidor no Render:</div>
+      <input type="text" id="cfg-url" placeholder="https://workhub-backend.onrender.com" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;outline:none;font-family:inherit" oninput="cfgSave()">
+      <div style="font-size:11px;color:var(--text-3);margin-top:6px" id="cfg-status">Não configurado</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Chave da API (API_SECRET)</div>
+      <input type="password" id="cfg-key" placeholder="workhub2026secretkey" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;outline:none;font-family:inherit" oninput="cfgSave()">
+      <div style="font-size:11px;color:var(--text-3);margin-top:6px">Mesma chave que você colocou no Render em API_SECRET</div>
+      <button class="btn btn-primary" style="margin-top:14px" onclick="cfgTest()"><i class="ti ti-plug"></i> Testar conexão</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="wh-toast"></div>
+
+<script>
+/* ══ CONFIG ══ */
+let API_URL = localStorage.getItem('wh_api_url') || '';
+let API_KEY = localStorage.getItem('wh_api_key') || 'workhub2026secretkey';
+
+function cfgSave() {
+  API_URL = document.getElementById('cfg-url').value.trim().replace(/\/$/,'');
+  API_KEY = document.getElementById('cfg-key').value.trim();
+  localStorage.setItem('wh_api_url', API_URL);
+  localStorage.setItem('wh_api_key', API_KEY);
+  document.getElementById('cfg-status').textContent = API_URL ? '✅ URL salva' : 'Não configurado';
+}
+async function cfgTest() {
+  if (!API_URL) { toast('Cole a URL do Render primeiro!'); return; }
+  try {
+    const r = await fetch(API_URL+'/health');
+    const d = await r.json();
+    toast('✅ Conectado! Banco: '+d.database);
+  } catch(e) { toast('❌ Erro: '+e.message); }
+}
+
+/* ══ API CLIENT ══ */
+async function api(method, path, body) {
+  if (!API_URL) { toast('⚠️ Configure a URL da API em Configurações'); throw new Error('API não configurada'); }
+  loading(true);
+  try {
+    const opts = { method, headers: { 'Content-Type':'application/json', 'x-api-key': API_KEY } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API_URL + path, opts);
+    if (!r.ok) throw new Error('Erro '+r.status);
+    return await r.json();
+  } catch(e) {
+    toast('❌ Erro ao salvar: '+e.message);
+    throw e;
+  } finally { loading(false); }
+}
+
+function loading(on) {
+  const bar = document.getElementById('loading-bar');
+  bar.className = 'loading-bar' + (on ? ' active' : ' done');
+  if (!on) setTimeout(() => bar.className='loading-bar', 600);
+}
+
+/* ══ NAVIGATION ══ */
+function goTo(page, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+  if (page==='agenda') calRenderAll();
+  if (page==='base') nbInit();
+  if (page==='tarefas') kLoad();
+  if (page==='config') { document.getElementById('cfg-url').value=API_URL; document.getElementById('cfg-key').value=API_KEY; document.getElementById('cfg-status').textContent=API_URL?'✅ URL salva':'Não configurado'; }
+}
+
+/* ══ UTILS ══ */
+const TODAYISO = new Date().toISOString().slice(0,10);
+const TOISO = d => d.toISOString().slice(0,10);
+const STRIP = h => h.replace(/<[^>]+>/g,'').trim();
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function fmtDate(iso){const[y,m,d]=iso.split('-');return`${d}/${m}`;}
+function fmtFull(iso){const dt=new Date(iso+'T12:00:00');return`${DIAS[dt.getDay()]}, ${dt.getDate()} de ${MESES[dt.getMonth()]} de ${dt.getFullYear()}`;}
+function addDays(iso,n){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return TOISO(d);}
+function toast(msg){const el=document.getElementById('wh-toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+/* ══════════════ KANBAN ══════════════ */
+let kTasks=[], kEditId=null, kDragging=null, kFilterPrio='all';
+const K_COLS=[{id:'todo',label:'A fazer',color:'#888780'},{id:'doing',label:'Em andamento',color:'#BA7517'},{id:'review',label:'Revisão',color:'#7F77DD'},{id:'done',label:'Concluído',color:'#1D9E75'}];
+
+async function kLoad() {
+  try { kTasks = await api('GET','/api/tasks'); kRender(); }
+  catch(e) { kRender(); }
+}
+
+function kRender() {
+  const board=document.getElementById('k-board');board.innerHTML='';
+  K_COLS.forEach(col=>{
+    const colTasks=kTasks.filter(t=>t.col===col.id);
+    const el=document.createElement('div');el.className='k-col';
+    el.innerHTML=`<div class="col-header"><div class="col-title-row"><div class="col-title"><div class="col-bar" style="background:${col.color}"></div>${col.label}</div><div style="display:flex;align-items:center;gap:6px"><span class="col-count">${colTasks.length}</span><button class="col-add-btn" onclick="kQuickAdd('${col.id}')"><i class="ti ti-plus"></i></button></div></div></div><div class="k-cards" id="kc-${col.id}" ondragover="kDragOver(event,'${col.id}')" ondrop="kDrop(event,'${col.id}')" ondragleave="e=>e.currentTarget.classList.remove('drag-over')">${colTasks.length===0?'<div class="k-empty"><i class="ti ti-inbox"></i>Sem tarefas</div>':''}</div><div class="add-card-form" id="kq-${col.id}"><textarea class="add-card-input" id="kqi-${col.id}" rows="2" placeholder="Título..." onkeydown="kQKey(event,'${col.id}')"></textarea><div class="add-card-actions"><button class="btn-confirm" onclick="kQConfirm('${col.id}')">Adicionar</button><button class="btn-cancel-inline" onclick="kQCancel('${col.id}')">Cancelar</button></div></div>`;
+    board.appendChild(el);
+    const container=el.querySelector(`#kc-${col.id}`);
+    colTasks.forEach(task=>container.appendChild(kBuildCard(task)));
+  });
+  kFilter();kUpdateSprint();
+}
+function kBuildCard(t){
+  const div=document.createElement('div');div.className='task-card';div.draggable=true;div.dataset.id=t.id;
+  div.addEventListener('dragstart',e=>{kDragging=t.id;setTimeout(()=>e.target.classList.add('dragging'),0);});
+  div.addEventListener('dragend',e=>e.target.classList.remove('dragging'));
+  const isLate=t.due&&t.due<TODAYISO&&t.col!=='done';
+  const pe={urgente:'🔴 Urgente',alta:'🟠 Alta',media:'🟡 Média',baixa:'⚪ Baixa'};
+  const pc={urgente:'prio-urgente',alta:'prio-alta',media:'prio-media',baixa:'prio-baixa'};
+  div.innerHTML=`<div class="card-tags"><span class="ktag ktag-${t.tag}">${t.tag.charAt(0).toUpperCase()+t.tag.slice(1)}</span></div><div class="card-title">${t.title}</div><div class="card-footer"><div class="card-meta"><span class="prio ${pc[t.prio]||''}">${pe[t.prio]||''}</span>${t.due?`<span class="due-date ${isLate?'late':''}">${fmtDate(t.due)}</span>`:''}</div><div class="card-actions"><button class="card-btn" onclick="kEditTask(${t.id})"><i class="ti ti-edit"></i></button><button class="card-btn del" onclick="kTaskDel(${t.id})"><i class="ti ti-trash"></i></button></div></div>`;
+  return div;
+}
+function kUpdateSprint(){const done=kTasks.filter(t=>t.col==='done').length;const pct=kTasks.length?Math.round(done/kTasks.length*100):0;document.getElementById('k-sprint-fill').style.width=pct+'%';document.getElementById('k-sprint-pct').textContent=pct+'%';}
+function kSetFilter(type,btn){btn.closest('.filter-group').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');kFilterPrio=btn.dataset.prio;kFilter();}
+function kFilter(){const q=(document.getElementById('k-search').value||'').toLowerCase();document.querySelectorAll('.task-card').forEach(card=>{const t=kTasks.find(t=>t.id===parseInt(card.dataset.id));if(!t)return;const ok=(kFilterPrio==='all'||t.prio===kFilterPrio)&&(!q||t.title.toLowerCase().includes(q));card.classList.toggle('k-hidden',!ok);});}
+function kDragOver(e,col){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+async function kDrop(e,col){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(kDragging===null)return;
+  const t=kTasks.find(t=>t.id===kDragging);
+  if(t&&t.col!==col){
+    const old=t.col;t.col=col;kRender();
+    try{await api('PUT',`/api/tasks/${t.id}`,t);toast(`Movido para "${K_COLS.find(c=>c.id===col).label}"`);}
+    catch(e){t.col=old;kRender();}
+  }
+}
+function kQuickAdd(col){document.getElementById('kq-'+col).classList.add('visible');document.getElementById('kqi-'+col).focus();}
+function kQCancel(col){document.getElementById('kq-'+col).classList.remove('visible');document.getElementById('kqi-'+col).value='';}
+function kQKey(e,col){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();kQConfirm(col);}if(e.key==='Escape')kQCancel(col);}
+async function kQConfirm(col){
+  const inp=document.getElementById('kqi-'+col);const title=inp.value.trim();if(!title)return;
+  try{const t=await api('POST','/api/tasks',{title,col,prio:'media',tag:'dev'});kTasks.unshift(t);kRender();toast('Tarefa criada!');kQCancel(col);}catch(e){}
+}
+function kOpenModal(){kEditId=null;document.getElementById('k-modal-title').textContent='Nova tarefa';document.getElementById('kf-title').value='';document.getElementById('kf-desc').value='';document.getElementById('kf-col').value='todo';document.getElementById('kf-prio').value='media';document.getElementById('kf-tag').value='dev';document.getElementById('kf-due').value='';document.getElementById('k-btn-del').style.display='none';document.getElementById('k-overlay').classList.add('open');document.getElementById('kf-title').focus();}
+function kEditTask(id){const t=kTasks.find(t=>t.id===id);if(!t)return;kEditId=id;document.getElementById('k-modal-title').textContent='Editar tarefa';document.getElementById('kf-title').value=t.title;document.getElementById('kf-desc').value=t.description||'';document.getElementById('kf-col').value=t.col;document.getElementById('kf-prio').value=t.prio;document.getElementById('kf-tag').value=t.tag;document.getElementById('kf-due').value=t.due||'';document.getElementById('k-btn-del').style.display='inline-flex';document.getElementById('k-overlay').classList.add('open');}
+async function kSaveTask(){
+  const title=document.getElementById('kf-title').value.trim();if(!title)return;
+  const data={title,description:document.getElementById('kf-desc').value,col:document.getElementById('kf-col').value,prio:document.getElementById('kf-prio').value,tag:document.getElementById('kf-tag').value,due:document.getElementById('kf-due').value||null};
+  try{
+    if(kEditId){const t=await api('PUT',`/api/tasks/${kEditId}`,data);const i=kTasks.findIndex(x=>x.id===kEditId);kTasks[i]=t;toast('Atualizado!');}
+    else{const t=await api('POST','/api/tasks',data);kTasks.unshift(t);toast('Criado!');}
+    kCloseModal();kRender();
+  }catch(e){}
+}
+async function kDeleteTask(){if(!confirm('Excluir?'))return;try{await api('DELETE',`/api/tasks/${kEditId}`);kTasks=kTasks.filter(t=>t.id!==kEditId);kCloseModal();kRender();toast('Excluída.');}catch(e){}}
+async function kTaskDel(id){if(!confirm('Excluir?'))return;try{await api('DELETE',`/api/tasks/${id}`);kTasks=kTasks.filter(t=>t.id!==id);kRender();toast('Excluída.');}catch(e){}}
+function kCloseModal(){document.getElementById('k-overlay').classList.remove('open');}
+
+/* ══════════════ AGENDA ══════════════ */
+const CAT_EV={reuniao:{label:'Reunião',color:'#1D9E75',cls:'cat-reuniao'},prazo:{label:'Prazo',color:'#D85A30',cls:'cat-prazo'},entrega:{label:'Entrega',color:'#BA7517',cls:'cat-entrega'},pessoal:{label:'Pessoal',color:'#7F77DD',cls:'cat-pessoal'},lembrete:{label:'Lembrete',color:'#378ADD',cls:'cat-lembrete'}};
+let calEvents=[], calView='month', calY=new Date().getFullYear(), calM=new Date().getMonth(), calD=new Date().getDate();
+let miniY=calY, miniM=calM, calEditId=null, calDetId=null;
+
+async function calLoad(){try{calEvents=await api('GET','/api/events');}catch(e){calEvents=[];}}
+async function calRenderAll(){await calLoad();calRenderMini();calRenderMain();calRenderUpcoming();}
+function calSetView(v,btn){calView=v;document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');calRenderMain();}
+function calNav(d){if(calView==='month'){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}}calRenderMain();}
+function miniNav(d){miniM+=d;if(miniM>11){miniM=0;miniY++;}if(miniM<0){miniM=11;miniY--;}calRenderMini();}
+function calGoToday(){calY=new Date().getFullYear();calM=new Date().getMonth();calD=new Date().getDate();miniY=calY;miniM=calM;calRenderAll();}
+function calRenderMini(){
+  document.getElementById('mini-title').textContent=MESES[miniM].slice(0,3)+' '+miniY;
+  const first=new Date(miniY,miniM,1).getDay(),days=new Date(miniY,miniM+1,0).getDate(),prev=new Date(miniY,miniM,0).getDate();
+  const evDates=new Set(calEvents.map(e=>e.date));
+  let h='';
+  for(let i=0;i<42;i++){let d,cls='mini-day',mo=miniM;
+    if(i<first){d=prev-first+i+1;cls+=' other';mo=miniM-1;}
+    else if(i>=first+days){d=i-first-days+1;cls+=' other';mo=miniM+1;}
+    else{d=i-first+1;const iso=`${miniY}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;if(iso===TODAYISO)cls+=' today';if(evDates.has(iso))cls+=' has-ev';}
+    h+=`<div class="${cls}">${d}</div>`;}
+  document.getElementById('mini-days').innerHTML=h;
+}
+function calRenderUpcoming(){
+  const fut=calEvents.filter(e=>e.date>=TODAYISO).sort((a,b)=>(a.date+a.start)>(b.date+b.start)?1:-1).slice(0,5);
+  const el=document.getElementById('cal-upcoming');
+  if(!fut.length){el.innerHTML='<div style="font-size:12px;color:var(--text-3)">Sem eventos futuros.</div>';return;}
+  el.innerHTML=fut.map(ev=>{const c=CAT_EV[ev.cat]||CAT_EV.reuniao;const dt=new Date(ev.date+'T12:00');return`<div class="up-item" onclick="calShowDet(${ev.id})"><div class="up-dot" style="background:${c.color}"></div><div class="up-date"><div class="up-day-num" style="color:${c.color}">${dt.getDate()}</div><div class="up-day-name">${DIAS[dt.getDay()]}</div></div><div><div class="up-title">${ev.title}</div><div class="up-time">${ev.start?ev.start+(ev.end?' – '+ev.end:''):'Dia inteiro'}</div><span class="up-badge ${c.cls}">${c.label}</span></div></div>`;}).join('');
+}
+function calRenderMain(){
+  const cv=document.getElementById('cal-view');
+  const y=calY,m=calM;
+  document.getElementById('cal-main-title').textContent=MESES[m]+' '+y;
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
+  const evMap={};calEvents.forEach(e=>{if(!evMap[e.date])evMap[e.date]=[];evMap[e.date].push(e);});
+  let cells='';
+  for(let i=0;i<42;i++){let d,iso,other=false;
+    if(i<first){d=prev-first+i+1;iso=TOISO(new Date(y,m-1,d));other=true;}
+    else if(i>=first+days){d=i-first-days+1;iso=TOISO(new Date(y,m+1,d));other=true;}
+    else{d=i-first+1;iso=TOISO(new Date(y,m,d));}
+    const isT=iso===TODAYISO;
+    const evs=(evMap[iso]||[]).sort((a,b)=>a.start>b.start?1:-1);
+    const pills=evs.slice(0,3).map(e=>`<div class="ev-pill ${(CAT_EV[e.cat]||CAT_EV.reuniao).cls}" onclick="calShowDet(${e.id});event.stopPropagation()">${e.start?e.start+' ':''}${e.title}</div>`).join('');
+    cells+=`<div class="day-cell${other?' other-month':''}${isT?' c-today':''}" onclick="calOpenModal('${iso}')"><div class="day-num">${d}</div><div>${pills}</div></div>`;}
+  cv.innerHTML=`<div class="month-grid" style="flex:1;display:flex;flex-direction:column;overflow:hidden"><div class="weekday-row">${DIAS.map(d=>`<div class="wday">${d}</div>`).join('')}</div><div class="days-grid" style="flex:1;overflow:hidden">${cells}</div></div>`;
+}
+function calShowDet(id){
+  const ev=calEvents.find(e=>e.id===id);if(!ev)return;calDetId=id;
+  const c=CAT_EV[ev.cat]||CAT_EV.reuniao;const dt=new Date(ev.date+'T12:00');
+  document.getElementById('det-bar').style.background=c.color;
+  document.getElementById('det-title').textContent=ev.title;
+  document.getElementById('det-date').textContent=fmtFull(ev.date);
+  const tr=document.getElementById('det-time-row');ev.start?(document.getElementById('det-time').textContent=ev.start+(ev.end?' – '+ev.end:''),tr.style.display='flex'):tr.style.display='none';
+  const lr=document.getElementById('det-local-row');ev.local?(document.getElementById('det-local').textContent=ev.local,lr.style.display='flex'):lr.style.display='none';
+  const dr=document.getElementById('det-desc-row');ev.description?(document.getElementById('det-desc').textContent=ev.description,dr.style.display='flex'):dr.style.display='none';
+  document.getElementById('det-overlay').classList.add('open');
+}
+function detClose(){document.getElementById('det-overlay').classList.remove('open');}
+function detEdit(){detClose();calEditEv(calDetId);}
+async function detDelete(){if(!confirm('Excluir?'))return;try{await api('DELETE',`/api/events/${calDetId}`);calEvents=calEvents.filter(e=>e.id!==calDetId);detClose();calRenderMain();calRenderUpcoming();toast('Excluído.');}catch(e){}}
+function calOpenModal(dateStr){
+  calEditId=null;document.getElementById('cal-modal-title').textContent='Novo evento';
+  document.getElementById('ef-title').value='';document.getElementById('ef-date').value=dateStr||TODAYISO;
+  document.getElementById('ef-cat').value='reuniao';document.getElementById('ef-start').value='09:00';
+  document.getElementById('ef-end').value='10:00';document.getElementById('ef-local').value='';
+  document.getElementById('ef-desc').value='';document.getElementById('ef-remind').value='15';
+  document.getElementById('ef-repeat').value='';document.getElementById('e-btn-del').style.display='none';
+  document.getElementById('cal-overlay').classList.add('open');document.getElementById('ef-title').focus();
+}
+function calEditEv(id){
+  const ev=calEvents.find(e=>e.id===id);if(!ev)return;calEditId=id;
+  document.getElementById('cal-modal-title').textContent='Editar evento';
+  document.getElementById('ef-title').value=ev.title;document.getElementById('ef-date').value=ev.date;
+  document.getElementById('ef-cat').value=ev.cat;document.getElementById('ef-start').value=ev.start||'';
+  document.getElementById('ef-end').value=ev.end||'';document.getElementById('ef-local').value=ev.local||'';
+  document.getElementById('ef-desc').value=ev.description||'';document.getElementById('ef-remind').value=ev.remind||'15';
+  document.getElementById('ef-repeat').value=ev.repeat||'';document.getElementById('e-btn-del').style.display='inline-flex';
+  document.getElementById('cal-overlay').classList.add('open');
+}
+async function calSaveEv(){
+  const title=document.getElementById('ef-title').value.trim();const date=document.getElementById('ef-date').value;
+  if(!title||!date){alert('Preencha título e data.');return;}
+  const data={title,date,start_time:document.getElementById('ef-start').value,end_time:document.getElementById('ef-end').value,cat:document.getElementById('ef-cat').value,local:document.getElementById('ef-local').value,description:document.getElementById('ef-desc').value,remind:parseInt(document.getElementById('ef-remind').value),repeat:document.getElementById('ef-repeat').value};
+  try{
+    if(calEditId){const ev=await api('PUT',`/api/events/${calEditId}`,data);const i=calEvents.findIndex(e=>e.id===calEditId);calEvents[i]=ev;toast('Atualizado!');}
+    else{const ev=await api('POST','/api/events',data);calEvents.push(ev);toast('Evento criado!');}
+    calCloseModal();calRenderMain();calRenderUpcoming();
+  }catch(e){}
+}
+async function calDeleteEv(){if(!confirm('Excluir?'))return;try{await api('DELETE',`/api/events/${calEditId}`);calEvents=calEvents.filter(e=>e.id!==calEditId);calCloseModal();calRenderMain();calRenderUpcoming();toast('Excluído.');}catch(e){}}
+function calCloseModal(){document.getElementById('cal-overlay').classList.remove('open');}
+
+/* ══════════════ BASE DE DADOS ══════════════ */
+const NB_COLORS=['#1D9E75','#BA7517','#D85A30','#7F77DD','#378ADD','#888780','#085041'];
+let nbNotes=[], nbCats=[], nbActiveCat='all', nbActiveNote=null, nbSaveTimer=null, nbSelColor=NB_COLORS[0];
+
+async function nbInit(){
+  try{
+    nbCats=await api('GET','/api/categories');
+    nbNotes=await api('GET','/api/notes');
+    nbRenderCats();nbRenderList();
+  }catch(e){nbRenderCats();nbRenderList();}
+}
+function nbRenderCats(){
+  document.getElementById('nb-cat-list').innerHTML=nbCats.map(c=>`<div class="cat-item${nbActiveCat===String(c.id)?' active':''}" data-cat="${c.id}" onclick="nbSelCat('${c.id}',this)"><i class="ti ${c.icon}" style="font-size:15px;color:${c.color}"></i>${c.name}<span class="cat-count-badge">${nbNotes.filter(n=>n.category===c.name).length}</span></div>`).join('');
+  const sel=document.getElementById('nb-note-cat');
+  sel.innerHTML='<option value="">Sem categoria</option>'+nbCats.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  if(nbActiveNote){const n=nbNotes.find(n=>n.id===nbActiveNote);if(n)sel.value=n.category||'';}
+}
+function nbSelCat(id,el){nbActiveCat=String(id);document.querySelectorAll('.cat-panel .cat-item').forEach(e=>e.classList.remove('active'));el.classList.add('active');nbRenderList();}
+function nbRenderList(){
+  const q=(document.getElementById('nb-search').value||'').toLowerCase();
+  const sort=document.getElementById('nb-sort').value;
+  const catName=nbActiveCat==='all'||nbActiveCat==='pinned'?null:(nbCats.find(c=>String(c.id)===nbActiveCat)||{}).name;
+  let list=nbNotes.filter(n=>{
+    if(nbActiveCat==='pinned')return n.pinned;
+    if(catName)return n.category===catName;
+    return true;
+  }).filter(n=>!q||n.title.toLowerCase().includes(q)||STRIP(n.content).toLowerCase().includes(q)||(n.tags||[]).some(t=>t.toLowerCase().includes(q)));
+  list.sort((a,b)=>sort==='title'?a.title.localeCompare(b.title):sort==='created'?b.created_at>a.created_at?1:-1:b.updated_at>a.updated_at?1:-1);
+  document.getElementById('nb-panel-title').textContent=nbActiveCat==='all'?'Todas as notas':nbActiveCat==='pinned'?'Fixadas':(catName||'Notas');
+  document.getElementById('nb-panel-count').textContent=`${list.length} nota${list.length!==1?'s':''}`;
+  document.getElementById('nb-count-all').textContent=nbNotes.length;
+  document.getElementById('nb-count-pinned').textContent=nbNotes.filter(n=>n.pinned).length;
+  const el=document.getElementById('nb-list');
+  if(!list.length){el.innerHTML='<div class="empty-notes"><i class="ti ti-notes-off"></i><p>Nenhuma nota.</p></div>';return;}
+  el.innerHTML=list.map(n=>{const cat=nbCats.find(c=>c.name===n.category);const prev=STRIP(n.content).slice(0,100);const tags=(n.tags||[]).map(t=>`<span class="ntag" style="background:var(--em-light);color:var(--em-text)">${t}</span>`).join('');const dt=new Date(n.updated_at);return`<div class="note-item${n.id===nbActiveNote?' active':''}" onclick="nbOpenNote(${n.id})"><div class="note-item-top"><div class="note-item-title">${n.title||'Sem título'}</div>${n.pinned?'<i class="ti ti-pin pin-icon-sm"></i>':''}</div><div class="note-item-preview">${prev||'Nota vazia'}</div><div class="note-item-footer"><span class="note-date">${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}</span>${cat?`<span class="ntag" style="background:${cat.color}20;color:${cat.color}">${cat.name}</span>`:''} ${tags}</div></div>`;}).join('');
+}
+function nbOpenNote(id){
+  const n=nbNotes.find(n=>n.id===id);if(!n)return;nbActiveNote=id;
+  document.getElementById('nb-empty').style.display='none';
+  const em=document.getElementById('nb-editor-main');em.style.display='flex';em.style.flexDirection='column';em.style.flex='1';em.style.overflow='hidden';
+  document.getElementById('nb-title').value=n.title;
+  document.getElementById('nb-area').innerHTML=n.content;
+  document.getElementById('nb-note-cat').value=n.category||'';
+  nbRenderTagChips(n.tags||[]);nbUpdatePinBtn(n.pinned);nbSetSave('saved');nbRenderList();
+}
+async function nbNewNote(){
+  try{
+    const n=await api('POST','/api/notes',{title:'',content:'',category:'',tags:[],pinned:false});
+    nbNotes.unshift(n);nbRenderCats();nbRenderList();nbOpenNote(n.id);
+    document.getElementById('nb-title').focus();toast('Nova nota criada!');
+  }catch(e){}
+}
+function nbAutoSave(){
+  clearTimeout(nbSaveTimer);nbSetSave('saving');
+  nbSaveTimer=setTimeout(async()=>{
+    const n=nbNotes.find(n=>n.id===nbActiveNote);if(!n)return;
+    n.title=document.getElementById('nb-title').value;
+    n.content=document.getElementById('nb-area').innerHTML;
+    n.category=document.getElementById('nb-note-cat').value;
+    try{const updated=await api('PUT',`/api/notes/${n.id}`,n);Object.assign(n,updated);nbRenderList();nbSetSave('saved');}
+    catch(e){nbSetSave('erro');}
+  },800);
+}
+function nbSetSave(s){const el=document.getElementById('nb-save');el.innerHTML=s==='saved'?'<i class="ti ti-check"></i> Salvo':s==='erro'?'<i class="ti ti-alert-circle"></i> Erro ao salvar':'<i class="ti ti-clock"></i> Salvando...';el.className='save-status'+(s==='saved'?' saved':'');}
+function nbRenderTagChips(tags){document.getElementById('nb-tag-chips').innerHTML=(tags||[]).map(t=>`<span class="tag-chip">${t}<button onclick="nbRemoveTag('${t}')"><i class="ti ti-x" style="font-size:10px"></i></button></span>`).join('');}
+function nbTagKey(e){if(e.key==='Enter'||e.key===','){e.preventDefault();const val=e.target.value.trim();if(!val)return;const n=nbNotes.find(n=>n.id===nbActiveNote);if(!n)return;if(!n.tags)n.tags=[];if(!n.tags.includes(val)){n.tags.push(val);nbRenderTagChips(n.tags);nbAutoSave();}e.target.value='';}}
+function nbRemoveTag(t){const n=nbNotes.find(n=>n.id===nbActiveNote);if(!n)return;n.tags=(n.tags||[]).filter(x=>x!==t);nbRenderTagChips(n.tags);nbAutoSave();}
+function nbTogglePin(){const n=nbNotes.find(n=>n.id===nbActiveNote);if(!n)return;n.pinned=!n.pinned;nbUpdatePinBtn(n.pinned);nbAutoSave();}
+function nbUpdatePinBtn(p){document.getElementById('nb-pin-label').textContent=p?'Fixada':'Fixar';document.getElementById('nb-pin-btn').className='pin-btn'+(p?' pinned':'');}
+async function nbDelete(){if(!nbActiveNote||!confirm('Excluir?'))return;try{await api('DELETE',`/api/notes/${nbActiveNote}`);nbNotes=nbNotes.filter(n=>n.id!==nbActiveNote);nbActiveNote=null;document.getElementById('nb-editor-main').style.display='none';document.getElementById('nb-empty').style.display='flex';nbRenderList();toast('Nota excluída.');}catch(e){}}
+function nbFmt(cmd){const area=document.getElementById('nb-area');area.focus();const fns={bold:()=>document.execCommand('bold'),italic:()=>document.execCommand('italic'),underline:()=>document.execCommand('underline'),ul:()=>document.execCommand('insertUnorderedList'),ol:()=>document.execCommand('insertOrderedList'),h1:()=>document.execCommand('formatBlock','<h1>'),h2:()=>document.execCommand('formatBlock','<h2>'),bq:()=>document.execCommand('formatBlock','<blockquote>'),code:()=>{const r=window.getSelection().getRangeAt(0);const c=document.createElement('code');c.textContent=r.toString()||'código';r.deleteContents();r.insertNode(c);}};if(fns[cmd]){fns[cmd]();nbAutoSave();}}
+function nbOpenCatModal(){document.getElementById('nb-cat-name').value='';document.getElementById('nb-cat-icon').value='ti-folder';nbSelColor=NB_COLORS[0];document.getElementById('nb-color-row').innerHTML=NB_COLORS.map(c=>`<div style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===nbSelColor?'#000':'transparent'}" onclick="nbPickColor('${c}',this)"></div>`).join('');document.getElementById('nb-cat-overlay').classList.add('open');document.getElementById('nb-cat-name').focus();}
+function nbPickColor(c,el){nbSelColor=c;document.querySelectorAll('#nb-color-row div').forEach(d=>d.style.borderColor='transparent');el.style.borderColor='#000';}
+function nbCloseCatModal(){document.getElementById('nb-cat-overlay').classList.remove('open');}
+async function nbSaveCat(){const name=document.getElementById('nb-cat-name').value.trim();if(!name)return;try{const c=await api('POST','/api/categories',{name,icon:document.getElementById('nb-cat-icon').value,color:nbSelColor});nbCats.push(c);nbCloseCatModal();nbRenderCats();nbRenderList();toast('Categoria criada!');}catch(e){}}
+
+/* ══ KEYBOARD ══ */
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea,select,[contenteditable]'))return;
+  if(e.key==='Escape'){kCloseModal();calCloseModal();detClose();nbCloseCatModal();}
+  if(e.key==='1')document.querySelector('[onclick*="tarefas"]').click();
+  if(e.key==='2')document.querySelector('[onclick*="agenda"]').click();
+  if(e.key==='3')document.querySelector('[onclick*="base"]').click();
+});
+
+/* ══ BOOT ══ */
+if(API_URL) kLoad();
+</script>
+</body>
+</html>
