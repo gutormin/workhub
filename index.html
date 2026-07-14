@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WorkHub</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-<!-- SDKs do Firebase (Compat Mode) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -485,31 +482,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- CONFIG -->
 <div class="page" id="page-config">
-  <header class="topbar"><h1>Configurações do Banco de Dados</h1></header>
+  <header class="topbar"><h1>Configurações</h1></header>
   <div style="padding:40px;max-width:540px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Sincronização na Nuvem (Firebase)</div>
-      <div style="font-size:13px;color:var(--text-2);margin-bottom:10px">O WorkHub está configurado para salvar e sincronizar seus dados automaticamente na nuvem usando o Firebase Firestore.</div>
-      
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:15px;background:var(--bg);padding:14px;border-radius:8px;border:1px solid var(--border)">
-        <div style="font-size:12px;color:var(--text-2)"><strong>Status da Conexão:</strong> <span id="cfg-status" style="color:var(--em-text);font-weight:600">✅ Conectado ao Firebase</span></div>
-        <div style="font-size:12px;color:var(--text-2)"><strong>Projeto Ativo:</strong> <code id="cfg-project-label">orquestrador-secexecpres</code></div>
-        <div style="font-size:12px;color:var(--text-3)">Todas as tarefas, agenda e notas são sincronizadas em tempo real entre todos os computadores que abrirem este aplicativo.</div>
-      </div>
-      
-      <button class="btn btn-primary" style="margin-top:18px;width:100%;justify-content:center" onclick="cfgTest()"><i class="ti ti-plug"></i> Testar conexão com o banco</button>
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">URL da API</div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:10px">Cole aqui a URL do seu servidor no Render:</div>
+      <input type="text" id="cfg-url" placeholder="https://workhub-backend.onrender.com" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;outline:none;font-family:inherit" oninput="cfgSave()">
+      <div style="font-size:11px;color:var(--text-3);margin-top:6px" id="cfg-status">Não configurado</div>
     </div>
-    
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:8px">Configurações Avançadas</div>
-      <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">Caso queira utilizar o seu próprio projeto do Firebase, insira as credenciais abaixo (deixe em branco para usar o padrão):</div>
-      
-      <div class="form-grid">
-        <div class="field"><label>API Key (apiKey)</label><input type="text" id="cfg-api-key" placeholder="AIzaSy..." oninput="cfgSave()"></div>
-        <div class="field"><label>Project ID (projectId)</label><input type="text" id="cfg-project-id" placeholder="seu-projeto-123" oninput="cfgSave()"></div>
-        <div class="field"><label>App ID (appId)</label><input type="text" id="cfg-app-id" placeholder="1:123456:web:abcd" oninput="cfgSave()"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text-3);margin-top:10px">As alterações serão salvas localmente e aplicadas ao reiniciar a página.</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">Chave da API (API_SECRET)</div>
+      <input type="password" id="cfg-key" placeholder="workhub2026secretkey" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;outline:none;font-family:inherit" oninput="cfgSave()">
+      <div style="font-size:11px;color:var(--text-3);margin-top:6px">Mesma chave que você colocou no Render em API_SECRET</div>
+      <button class="btn btn-primary" style="margin-top:14px" onclick="cfgTest()"><i class="ti ti-plug"></i> Testar conexão</button>
     </div>
   </div>
 </div>
@@ -517,168 +502,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="toast" id="wh-toast"></div>
 
 <script>
-/* ══ CONFIG & FIREBASE INITIALIZATION ══ */
-const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyBgaBMX2aHtiab1_7l64tSCSBQTn7e1Eak',
-  authDomain: 'orquestrador-secexecpres.firebaseapp.com',
-  projectId: 'orquestrador-secexecpres',
-  storageBucket: 'orquestrador-secexecpres.firebasestorage.app',
-  messagingSenderId: '297721044357',
-  appId: '1:297721044357:web:3c4bece1e257667abbb8ec',
-  measurementId: 'G-W9QV684la-SCSBQTn7e1Eak'
-};
-
-let customConfig = null;
-try {
-  const saved = localStorage.getItem('wh_firebase_config');
-  if (saved) customConfig = JSON.parse(saved);
-} catch (e) {}
-
-const firebaseConfig = customConfig || DEFAULT_FIREBASE_CONFIG;
-
-// Inicializa o Firebase
-let db;
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-} catch (e) {
-  console.error("Erro ao inicializar o Firebase:", e);
-  toast("❌ Erro ao conectar ao Firebase.");
-}
+/* ══ CONFIG ══ */
+let API_URL = localStorage.getItem('wh_api_url') || '';
+let API_KEY = localStorage.getItem('wh_api_key') || 'workhub2026secretkey';
 
 function cfgSave() {
-  const apiKey = document.getElementById('cfg-api-key').value.trim();
-  const projectId = document.getElementById('cfg-project-id').value.trim();
-  const appId = document.getElementById('cfg-app-id').value.trim();
-  
-  if (apiKey && projectId && appId) {
-    const config = {
-      apiKey,
-      authDomain: projectId + '.firebaseapp.com',
-      projectId,
-      storageBucket: projectId + '.firebasestorage.app',
-      appId
-    };
-    localStorage.setItem('wh_firebase_config', JSON.stringify(config));
-    document.getElementById('cfg-status').innerHTML = '⚠️ Reinicie a página para aplicar o novo projeto.';
-    document.getElementById('cfg-status').style.color = 'var(--cr-mid)';
-  } else {
-    localStorage.removeItem('wh_firebase_config');
-    document.getElementById('cfg-status').innerHTML = '✅ Usando projeto padrão';
-    document.getElementById('cfg-status').style.color = 'var(--em-text)';
-  }
+  API_URL = document.getElementById('cfg-url').value.trim().replace(/\/$/,'');
+  API_KEY = document.getElementById('cfg-key').value.trim();
+  localStorage.setItem('wh_api_url', API_URL);
+  localStorage.setItem('wh_api_key', API_KEY);
+  document.getElementById('cfg-status').textContent = API_URL ? '✅ URL salva' : 'Não configurado';
 }
-
-function fillConfigFields() {
-  const config = JSON.parse(localStorage.getItem('wh_firebase_config'));
-  document.getElementById('cfg-project-label').textContent = firebaseConfig.projectId;
-  if (config) {
-    document.getElementById('cfg-api-key').value = config.apiKey || '';
-    document.getElementById('cfg-project-id').value = config.projectId || '';
-    document.getElementById('cfg-app-id').value = config.appId || '';
-  } else {
-    document.getElementById('cfg-api-key').value = '';
-    document.getElementById('cfg-project-id').value = '';
-    document.getElementById('cfg-app-id').value = '';
-  }
-}
-
 async function cfgTest() {
+  if (!API_URL) { toast('Cole a URL do Render primeiro!'); return; }
   try {
-    loading(true);
-    // Testa gravação e leitura no Firestore
-    const testDoc = db.collection('wh_test').doc('ping');
-    await testDoc.set({ timestamp: Date.now() });
-    await testDoc.delete();
-    toast('✅ Conexão com o Firebase Firestore validada com sucesso!');
-  } catch(e) { 
-    toast('❌ Erro na conexão: '+e.message); 
-  } finally {
-    loading(false);
-  }
+    const r = await fetch(API_URL+'/health');
+    const d = await r.json();
+    toast('✅ Conectado! Banco: '+d.database);
+  } catch(e) { toast('❌ Erro: '+e.message); }
 }
 
-/* ══ API CLIENT (MAPPED TO FIRESTORE) ══ */
+/* ══ API CLIENT ══ */
 async function api(method, path, body) {
-  if (!db) { toast('⚠️ Banco de dados não inicializado'); throw new Error('Firebase offline'); }
+  if (!API_URL) { toast('⚠️ Configure a URL da API em Configurações'); throw new Error('API não configurada'); }
   loading(true);
   try {
-    const parts = path.split('/').filter(Boolean); // ex: ['api', 'tasks', '123']
-    const type = parts[1]; // 'tasks', 'events', 'notes', 'categories'
-    const id = parts[2]; // string ID se presente
-    
-    const collectionName = 'wh_' + type;
-    const colRef = db.collection(collectionName);
-    
-    if (method === 'GET') {
-      if (id) {
-        const doc = await colRef.doc(id).get();
-        if (!doc.exists) throw new Error('Documento não encontrado');
-        let data = doc.data();
-        if (type === 'events') {
-          data.start = data.start_time;
-          data.end = data.end_time;
-        }
-        return data;
-      } else {
-        const snap = await colRef.get();
-        const list = [];
-        snap.forEach(doc => {
-          let data = doc.data();
-          if (type === 'events') {
-            data.start = data.start_time;
-            data.end = data.end_time;
-          }
-          list.push(data);
-        });
-        return list;
-      }
-    }
-    
-    if (method === 'POST') {
-      const generatedId = Date.now();
-      const data = { ...body, id: generatedId };
-      if (type === 'notes') {
-        data.created_at = new Date().toISOString();
-        data.updated_at = new Date().toISOString();
-      }
-      await colRef.doc(String(generatedId)).set(data);
-      if (type === 'events') {
-        data.start = data.start_time;
-        data.end = data.end_time;
-      }
-      return data;
-    }
-    
-    if (method === 'PUT') {
-      if (!id) throw new Error('ID ausente para atualização');
-      const data = { ...body };
-      data.id = parseInt(id);
-      if (type === 'notes') {
-        data.updated_at = new Date().toISOString();
-      }
-      await colRef.doc(id).set(data, { merge: true });
-      if (type === 'events') {
-        data.start = data.start_time;
-        data.end = data.end_time;
-      }
-      return data;
-    }
-    
-    if (method === 'DELETE') {
-      if (!id) throw new Error('ID ausente para exclusão');
-      await colRef.doc(id).delete();
-      return { success: true };
-    }
-    
-    throw new Error('Método HTTP não suportado: ' + method);
+    const opts = { method, headers: { 'Content-Type':'application/json', 'x-api-key': API_KEY } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(API_URL + path, opts);
+    if (!r.ok) throw new Error('Erro '+r.status);
+    return await r.json();
   } catch(e) {
-    console.error('Erro na chamada da API Firebase:', e);
-    toast('❌ Erro no banco de dados: '+e.message);
+    toast('❌ Erro ao salvar: '+e.message);
     throw e;
-  } finally { 
-    loading(false); 
-  }
+  } finally { loading(false); }
 }
 
 function loading(on) {
@@ -696,9 +553,7 @@ function goTo(page, btn) {
   if (page==='agenda') calRenderAll();
   if (page==='base') nbInit();
   if (page==='tarefas') kLoad();
-  if (page==='config') { 
-    fillConfigFields();
-  }
+  if (page==='config') { document.getElementById('cfg-url').value=API_URL; document.getElementById('cfg-key').value=API_KEY; document.getElementById('cfg-status').textContent=API_URL?'✅ URL salva':'Não configurado'; }
 }
 
 /* ══ UTILS ══ */
@@ -942,8 +797,8 @@ function nbTogglePin(){const n=nbNotes.find(n=>n.id===nbActiveNote);if(!n)return
 function nbUpdatePinBtn(p){document.getElementById('nb-pin-label').textContent=p?'Fixada':'Fixar';document.getElementById('nb-pin-btn').className='pin-btn'+(p?' pinned':'');}
 async function nbDelete(){if(!nbActiveNote||!confirm('Excluir?'))return;try{await api('DELETE',`/api/notes/${nbActiveNote}`);nbNotes=nbNotes.filter(n=>n.id!==nbActiveNote);nbActiveNote=null;document.getElementById('nb-editor-main').style.display='none';document.getElementById('nb-empty').style.display='flex';nbRenderList();toast('Nota excluída.');}catch(e){}}
 function nbFmt(cmd){const area=document.getElementById('nb-area');area.focus();const fns={bold:()=>document.execCommand('bold'),italic:()=>document.execCommand('italic'),underline:()=>document.execCommand('underline'),ul:()=>document.execCommand('insertUnorderedList'),ol:()=>document.execCommand('insertOrderedList'),h1:()=>document.execCommand('formatBlock','<h1>'),h2:()=>document.execCommand('formatBlock','<h2>'),bq:()=>document.execCommand('formatBlock','<blockquote>'),code:()=>{const r=window.getSelection().getRangeAt(0);const c=document.createElement('code');c.textContent=r.toString()||'código';r.deleteContents();r.insertNode(c);}};if(fns[cmd]){fns[cmd]();nbAutoSave();}}
-function nbOpenCatModal(){document.getElementById('nb-cat-name').value='';document.getElementById('nb-cat-icon').value='ti-folder';nbPickColor(NB_COLORS[0]);document.getElementById('nb-color-row').innerHTML=NB_COLORS.map(c=>`<div style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===nbSelColor?'#000':'transparent'}" onclick="nbPickColor('${c}',this)"></div>`).join('');document.getElementById('nb-cat-overlay').classList.add('open');document.getElementById('nb-cat-name').focus();}
-function nbPickColor(c,el){nbSelColor=c;if(el){document.querySelectorAll('#nb-color-row div').forEach(d=>d.style.borderColor='transparent');el.style.borderColor='#000';}}
+function nbOpenCatModal(){document.getElementById('nb-cat-name').value='';document.getElementById('nb-cat-icon').value='ti-folder';nbSelColor=NB_COLORS[0];document.getElementById('nb-color-row').innerHTML=NB_COLORS.map(c=>`<div style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===nbSelColor?'#000':'transparent'}" onclick="nbPickColor('${c}',this)"></div>`).join('');document.getElementById('nb-cat-overlay').classList.add('open');document.getElementById('nb-cat-name').focus();}
+function nbPickColor(c,el){nbSelColor=c;document.querySelectorAll('#nb-color-row div').forEach(d=>d.style.borderColor='transparent');el.style.borderColor='#000';}
 function nbCloseCatModal(){document.getElementById('nb-cat-overlay').classList.remove('open');}
 async function nbSaveCat(){const name=document.getElementById('nb-cat-name').value.trim();if(!name)return;try{const c=await api('POST','/api/categories',{name,icon:document.getElementById('nb-cat-icon').value,color:nbSelColor});nbCats.push(c);nbCloseCatModal();nbRenderCats();nbRenderList();toast('Categoria criada!');}catch(e){}}
 
@@ -957,7 +812,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ══ BOOT ══ */
-if(db) kLoad();
+if(API_URL) kLoad();
 </script>
 </body>
 </html>
