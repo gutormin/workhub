@@ -98,13 +98,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .task-card.dragging{opacity:.4;}
 .task-card.k-hidden{display:none;}
 .card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;}
-.ktag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.ktag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;background:var(--border);color:var(--text-2);}
 .ktag-dev{background:var(--em-light);color:var(--em);}
 .ktag-design{background:var(--pu-light);color:var(--pu-text);}
 .ktag-bug{background:var(--cr-light);color:var(--cr-text);}
 .ktag-doc{background:var(--am-light);color:var(--am-text);}
 .ktag-teste{background:#EAF3DE;color:#27500A;}
-.card-title{font-size:13px;color:var(--text);line-height:1.45;margin-bottom:10px;}
+.card-title{font-size:13px;color:var(--text);line-height:1.45;margin-bottom:6px;font-weight:600;}
+.card-desc{font-size:11px;color:var(--text-2);line-height:1.4;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:pre-wrap;}
 .card-footer{display:flex;align-items:center;justify-content:space-between;}
 .card-meta{display:flex;align-items:center;gap:8px;}
 .prio{font-size:11px;display:flex;align-items:center;gap:3px;font-weight:500;}
@@ -323,7 +324,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="field"><label>Prioridade</label><select id="kf-prio"><option value="media">Média</option><option value="baixa">Baixa</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
       </div>
       <div class="form-row2">
-        <div class="field"><label>Tag</label><select id="kf-tag"><option value="dev">Dev</option><option value="design">Design</option><option value="bug">Bug</option><option value="doc">Doc</option><option value="teste">Teste</option></select></div>
+        <div class="field"><label>Tag</label><input type="text" id="kf-tag" placeholder="Digite uma tag (ex: dev, bug)"></div>
         <div class="field"><label>Prazo</label><input type="date" id="kf-due"></div>
       </div>
     </div>
@@ -595,7 +596,10 @@ function kBuildCard(t){
   const isLate=t.due&&t.due<TODAYISO&&t.col!=='done';
   const pe={urgente:'🔴 Urgente',alta:'🟠 Alta',media:'🟡 Média',baixa:'⚪ Baixa'};
   const pc={urgente:'prio-urgente',alta:'prio-alta',media:'prio-media',baixa:'prio-baixa'};
-  div.innerHTML=`<div class="card-tags"><span class="ktag ktag-${t.tag}">${t.tag.charAt(0).toUpperCase()+t.tag.slice(1)}</span></div><div class="card-title">${t.title}</div><div class="card-footer"><div class="card-meta"><span class="prio ${pc[t.prio]||''}">${pe[t.prio]||''}</span>${t.due?`<span class="due-date ${isLate?'late':''}">${fmtDate(t.due)}</span>`:''}</div><div class="card-actions"><button class="card-btn" onclick="kEditTask(${t.id})"><i class="ti ti-edit"></i></button><button class="card-btn del" onclick="kTaskDel(${t.id})"><i class="ti ti-trash"></i></button></div></div>`;
+  const tagClean=(t.tag||'').trim();
+  const tagHTML=tagClean?`<div class="card-tags"><span class="ktag ktag-${tagClean.toLowerCase()}">${tagClean}</span></div>`:'';
+  const descHTML=t.description?`<div class="card-desc">${t.description}</div>`:'';
+  div.innerHTML=`${tagHTML}<div class="card-title">${t.title}</div>${descHTML}<div class="card-footer"><div class="card-meta"><span class="prio ${pc[t.prio]||''}">${pe[t.prio]||''}</span>${t.due?`<span class="due-date ${isLate?'late':''}">${fmtDate(t.due)}</span>`:''}</div><div class="card-actions"><button class="card-btn" onclick="kEditTask(${t.id})"><i class="ti ti-edit"></i></button><button class="card-btn del" onclick="kTaskDel(${t.id})"><i class="ti ti-trash"></i></button></div></div>`;
   return div;
 }
 function kUpdateSprint(){const done=kTasks.filter(t=>t.col==='done').length;const pct=kTasks.length?Math.round(done/kTasks.length*100):0;document.getElementById('k-sprint-fill').style.width=pct+'%';document.getElementById('k-sprint-pct').textContent=pct+'%';}
@@ -619,11 +623,11 @@ async function kQConfirm(col){
   const inp=document.getElementById('kqi-'+col);const title=inp.value.trim();if(!title)return;
   try{const t=await api('POST','/api/tasks',{title,col,prio:'media',tag:'dev'});kTasks.unshift(t);kRender();toast('Tarefa criada!');kQCancel(col);}catch(e){}
 }
-function kOpenModal(){kEditId=null;document.getElementById('k-modal-title').textContent='Nova tarefa';document.getElementById('kf-title').value='';document.getElementById('kf-desc').value='';document.getElementById('kf-col').value='todo';document.getElementById('kf-prio').value='media';document.getElementById('kf-tag').value='dev';document.getElementById('kf-due').value='';document.getElementById('k-btn-del').style.display='none';document.getElementById('k-overlay').classList.add('open');document.getElementById('kf-title').focus();}
-function kEditTask(id){const t=kTasks.find(t=>t.id===id);if(!t)return;kEditId=id;document.getElementById('k-modal-title').textContent='Editar tarefa';document.getElementById('kf-title').value=t.title;document.getElementById('kf-desc').value=t.description||'';document.getElementById('kf-col').value=t.col;document.getElementById('kf-prio').value=t.prio;document.getElementById('kf-tag').value=t.tag;document.getElementById('kf-due').value=t.due||'';document.getElementById('k-btn-del').style.display='inline-flex';document.getElementById('k-overlay').classList.add('open');}
+function kOpenModal(){kEditId=null;document.getElementById('k-modal-title').textContent='Nova tarefa';document.getElementById('kf-title').value='';document.getElementById('kf-desc').value='';document.getElementById('kf-col').value='todo';document.getElementById('kf-prio').value='media';document.getElementById('kf-tag').value='';document.getElementById('kf-due').value='';document.getElementById('k-btn-del').style.display='none';document.getElementById('k-overlay').classList.add('open');document.getElementById('kf-title').focus();}
+function kEditTask(id){const t=kTasks.find(t=>t.id===id);if(!t)return;kEditId=id;document.getElementById('k-modal-title').textContent='Editar tarefa';document.getElementById('kf-title').value=t.title;document.getElementById('kf-desc').value=t.description||'';document.getElementById('kf-col').value=t.col;document.getElementById('kf-prio').value=t.prio;document.getElementById('kf-tag').value=t.tag||'';document.getElementById('kf-due').value=t.due||'';document.getElementById('k-btn-del').style.display='inline-flex';document.getElementById('k-overlay').classList.add('open');}
 async function kSaveTask(){
   const title=document.getElementById('kf-title').value.trim();if(!title)return;
-  const data={title,description:document.getElementById('kf-desc').value,col:document.getElementById('kf-col').value,prio:document.getElementById('kf-prio').value,tag:document.getElementById('kf-tag').value,due:document.getElementById('kf-due').value||null};
+  const data={title,description:document.getElementById('kf-desc').value,col:document.getElementById('kf-col').value,prio:document.getElementById('kf-prio').value,tag:document.getElementById('kf-tag').value.trim(),due:document.getElementById('kf-due').value||null};
   try{
     if(kEditId){const t=await api('PUT',`/api/tasks/${kEditId}`,data);const i=kTasks.findIndex(x=>x.id===kEditId);kTasks[i]=t;toast('Atualizado!');}
     else{const t=await api('POST','/api/tasks',data);kTasks.unshift(t);toast('Criado!');}
