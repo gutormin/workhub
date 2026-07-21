@@ -311,6 +311,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="filter-btn" data-prio="media" onclick="kSetFilter('prio',this)">Média</button>
       <button class="filter-btn" data-prio="baixa" onclick="kSetFilter('prio',this)">Baixa</button>
     </div>
+    <div class="filter-group">
+      <span class="filter-label">Ordenar:</span>
+      <select class="sort-select" id="k-sort" onchange="kRender()">
+        <option value="created-desc">Mais recentes primeiro</option>
+        <option value="created-asc">Mais antigas primeiro</option>
+        <option value="due-asc">Prazo mais próximo</option>
+        <option value="title-asc">Título (A-Z)</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Criação:</span>
+      <select class="sort-select" id="k-date-filter" onchange="kFilter()">
+        <option value="all">Todas as datas</option>
+        <option value="today">Criadas Hoje</option>
+        <option value="week">Últimos 7 dias</option>
+        <option value="month">Este mês</option>
+      </select>
+    </div>
   </div>
   <div class="board-wrap"><div class="board" id="k-board"></div></div>
 </div>
@@ -596,10 +614,37 @@ async function kLoad() {
   try { kTasks = await api('GET','/api/tasks'); kRender(); }
   catch(e) { kRender(); }
 }
+function isDateInFilter(dateStr, filterType) {
+  if (!dateStr || filterType === 'all') return true;
+  const today = getTodayISO();
+  const cDate = dateStr.slice(0, 10);
+  if (filterType === 'today') return cDate === today;
+  if (filterType === 'week') {
+    const d = new Date(cDate + 'T12:00:00');
+    const now = new Date();
+    const diff = (now - d) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  }
+  if (filterType === 'month') return cDate.slice(0, 7) === today.slice(0, 7);
+  return true;
+}
+
 function kRender() {
   const board=document.getElementById('k-board');if(!board)return;board.innerHTML='';
+  const sortMode=document.getElementById('k-sort')?.value||'created-desc';
+  let sortedTasks=[...kTasks];
+  if(sortMode==='created-desc'){
+    sortedTasks.sort((a,b)=>(b.created_at||b.id||'').toString().localeCompare((a.created_at||a.id||'').toString()));
+  }else if(sortMode==='created-asc'){
+    sortedTasks.sort((a,b)=>(a.created_at||a.id||'').toString().localeCompare((b.created_at||b.id||'').toString()));
+  }else if(sortMode==='due-asc'){
+    sortedTasks.sort((a,b)=>(a.due||'9999-99-99').localeCompare(b.due||'9999-99-99'));
+  }else if(sortMode==='title-asc'){
+    sortedTasks.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  }
+
   K_COLS.forEach(col=>{
-    const colTasks=kTasks.filter(t=>t.col===col.id);
+    const colTasks=sortedTasks.filter(t=>t.col===col.id);
     const el=document.createElement('div');el.className='k-col';
     el.innerHTML=`<div class="col-header"><div class="col-title-row"><div class="col-title"><div class="col-bar" style="background:${col.color}"></div>${col.label}</div><div style="display:flex;align-items:center;gap:6px"><span class="col-count">${colTasks.length}</span><button class="col-add-btn" onclick="kQuickAdd('${col.id}')"><i class="ti ti-plus"></i></button></div></div></div><div class="k-cards" id="kc-${col.id}">${colTasks.length===0?'<div class="k-empty"><i class="ti ti-inbox"></i>Sem tarefas</div>':''}</div><div class="add-card-form" id="kq-${col.id}"><textarea class="add-card-input" id="kqi-${col.id}" rows="2" placeholder="Título..."></textarea><div class="add-card-actions"><button class="btn-confirm" onclick="kQConfirm('${col.id}')">Adicionar</button><button class="btn-cancel-inline" onclick="kQCancel('${col.id}')">Cancelar</button></div></div>`;
     board.appendChild(el);
@@ -615,18 +660,34 @@ function kEditTask(id){
 function kBuildCard(t){
   const div=document.createElement('div');div.className='task-card';div.dataset.id=t.id;
   div.onclick=(e)=>{if(!e.target.closest('.card-btn')) kEditTask(t.id);};
-  const isLate=t.due&&t.due<TODAYISO&&t.col!=='done';
+  const isLate=t.due&&t.due<getTodayISO()&&t.col!=='done';
   const pe={urgente:'🔴 Urgente',alta:'🟠 Alta',media:'🟡 Média',baixa:'⚪ Baixa'};
   const pc={urgente:'prio-urgente',alta:'prio-alta',media:'prio-media',baixa:'prio-baixa'};
   const tagClean=(t.tag||'').trim();
   const tagHTML=tagClean?`<div class="card-tags"><span class="ktag ktag-${tagClean.toLowerCase()}">${tagClean}</span></div>`:'';
   const descHTML=t.description?`<div class="card-desc">${t.description}</div>`:'';
-  div.innerHTML=`${tagHTML}<div class="card-title">${t.title}</div>${descHTML}<div class="card-footer"><div class="card-meta"><span class="prio ${pc[t.prio]||''}">${pe[t.prio]||''}</span>${t.due?`<span class="due-date ${isLate?'late':''}">${fmtDate(t.due)}</span>`:''}</div><div class="card-actions"><button class="card-btn" onclick="event.stopPropagation();kEditTask(${t.id})"><i class="ti ti-edit"></i></button><button class="card-btn del" onclick="event.stopPropagation();kTaskDel(${t.id})"><i class="ti ti-trash"></i></button></div></div>`;
+  const createdIso=t.created_at?t.created_at.slice(0,10):'';
+  const createdHTML=createdIso?`<span class="due-date" title="Criado em ${fmtDate(createdIso)}"><i class="ti ti-calendar-plus"></i> ${fmtDate(createdIso)}</span>`:'';
+  const dueHTML=t.due?`<span class="due-date ${isLate?'late':''}" title="Prazo de entrega"><i class="ti ti-clock"></i> ${fmtDate(t.due)}</span>`:'';
+
+  div.innerHTML=`${tagHTML}<div class="card-title">${t.title}</div>${descHTML}<div class="card-footer"><div class="card-meta"><span class="prio ${pc[t.prio]||''}">${pe[t.prio]||''}</span>${createdHTML}${dueHTML}</div><div class="card-actions"><button class="card-btn" onclick="event.stopPropagation();kEditTask(${t.id})"><i class="ti ti-edit"></i></button><button class="card-btn del" onclick="event.stopPropagation();kTaskDel(${t.id})"><i class="ti ti-trash"></i></button></div></div>`;
   return div;
 }
 function kUpdateSprint(){const done=kTasks.filter(t=>t.col==='done').length;const pct=kTasks.length?Math.round(done/kTasks.length*100):0;const f=document.getElementById('k-sprint-fill');if(f)f.style.width=pct+'%';const p=document.getElementById('k-sprint-pct');if(p)p.textContent=pct+'%';}
 function kSetFilter(type,btn){btn.closest('.filter-group').querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');kFilterPrio=btn.dataset.prio;kFilter();}
-function kFilter(){const q=(document.getElementById('k-search')?.value||'').toLowerCase();document.querySelectorAll('.task-card').forEach(card=>{const t=kTasks.find(t=>t.id===parseInt(card.dataset.id));if(!t)return;const ok=(kFilterPrio==='all'||t.prio===kFilterPrio)&&(!q||t.title.toLowerCase().includes(q));card.classList.toggle('k-hidden',!ok);});}
+function kFilter(){
+  const q=(document.getElementById('k-search')?.value||'').toLowerCase();
+  const dateFilter=document.getElementById('k-date-filter')?.value||'all';
+  document.querySelectorAll('.task-card').forEach(card=>{
+    const t=kTasks.find(t=>t.id===parseInt(card.dataset.id));
+    if(!t)return;
+    const okPrio=(kFilterPrio==='all'||t.prio===kFilterPrio);
+    const okSearch=(!q||t.title.toLowerCase().includes(q)||(t.description||'').toLowerCase().includes(q));
+    const createdIso=t.created_at?t.created_at.slice(0,10):'';
+    const okDate=isDateInFilter(createdIso,dateFilter);
+    card.classList.toggle('k-hidden',!(okPrio&&okSearch&&okDate));
+  });
+}
 function kOpenModal(t=null){kEditId=t?t.id:null;document.getElementById('k-modal-title').textContent=t?'Editar tarefa':'Nova tarefa';document.getElementById('kf-title').value=t?t.title:'';document.getElementById('kf-desc').value=t?t.description||'':'';document.getElementById('kf-col').value=t?t.col:'todo';document.getElementById('kf-prio').value=t?t.prio:'media';document.getElementById('kf-tag').value=t?t.tag||'':'';document.getElementById('kf-due').value=t?t.due||'':'';document.getElementById('k-btn-del').style.display=t?'inline-flex':'none';document.getElementById('k-overlay').classList.add('open');}
 function kCloseModal(){document.getElementById('k-overlay').classList.remove('open');}
 async function kSaveTask(){
