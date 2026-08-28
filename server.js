@@ -263,6 +263,20 @@ app.post('/api/migrate-data', auth, async (req, res) => {
   }
 });
 
+app.post('/api/query-old-db', auth, async (req, res) => {
+  const { old_db_url, sql } = req.body;
+  if (!old_db_url || !sql) return res.status(400).json({ error: 'Parâmetros ausentes' });
+  const oldPool = new Pool({ connectionString: old_db_url, ssl: { rejectUnauthorized: false } });
+  try {
+    const { rows } = await oldPool.query(sql);
+    res.json({ rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    await oldPool.end();
+  }
+});
+
 app.get('/api/tasks',        auth, async (req, res) => { const { rows } = await pool.query('SELECT * FROM tasks ORDER BY created_at DESC'); res.json(rows.map(formatTask)); });
 app.post('/api/tasks',       auth, async (req, res) => { const { title, description='', col='todo', prio='media', tag='dev', due=null } = req.body; const { rows } = await pool.query(`INSERT INTO tasks (title,description,col,prio,tag,due) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`, [title, description, col, prio, tag, due||null]); res.status(201).json(formatTask(rows[0])); });
 app.put('/api/tasks/:id',    auth, async (req, res) => { const { title, description, col, prio, tag, due } = req.body; const { rows } = await pool.query(`UPDATE tasks SET title=$1,description=$2,col=$3,prio=$4,tag=$5,due=$6,updated_at=NOW() WHERE id=$7 RETURNING *`, [title, description, col, prio, tag, due||null, req.params.id]); if (!rows.length) return res.status(404).json({ error: 'Não encontrado' }); res.json(formatTask(rows[0])); });
